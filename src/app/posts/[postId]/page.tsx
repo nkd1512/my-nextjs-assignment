@@ -1,43 +1,55 @@
 // src/app/posts/[postId]/page.tsx
 
-// 1. ดึงข้อมูลโพสต์
-async function getPost(postId: string) {
-  // ใช้ fetch() เพื่อเรียก API สำหรับโพสต์แต่ละอัน
+// กำหนดชนิดข้อมูล (Interface) สำหรับข้อมูล
+interface Post {
+    id: number;
+    title: string;
+    body: string;
+}
+
+interface Comment {
+    postId: number;
+    id: number;
+    name: string;
+    email: string;
+    body: string;
+}
+
+// ฟังก์ชันดึงข้อมูลโพสต์
+async function getPost(postId: string): Promise<Post> {
   const res = await fetch(`https://jsonplaceholder.typicode.com/posts/${postId}`);
   const post = await res.json();
   return post;
 }
 
-// 2. ดึงข้อมูลคอมเมนต์
-async function getComments(postId: string) {
-  // ใช้ fetch() เพื่อเรียก API สำหรับคอมเมนต์ของโพสต์แต่ละอัน
+// ฟังก์ชันดึงข้อมูลคอมเมนต์
+async function getComments(postId: string): Promise<Comment[]> {
   const res = await fetch(`https://jsonplaceholder.typicode.com/posts/${postId}/comments`);
   const comments = await res.json();
   return comments;
 }
 
-// 3. สร้าง Component ของหน้า
+// คอมโพเนนต์หลักที่รับ props จาก Next.js
 export default async function PostAndCommentsPage({ params }: { params: { postId: string } }) {
-  // ดึงค่า postId จาก URL ที่ส่งมาใน params
   const { postId } = params;
 
-  // เรียกใช้ฟังก์ชันดึงข้อมูล 2 ตัวพร้อมกัน
-  const post = await getPost(postId);
-  const comments = await getComments(postId);
+  // ใช้ Promise.all เพื่อดึงข้อมูลพร้อมกัน
+  const [post, comments] = await Promise.all([
+    getPost(postId),
+    getComments(postId)
+  ]);
 
   return (
     <div>
-      {/* ส่วนสำหรับแสดงรายละเอียดของโพสต์ */}
       <h1>Post ID: {post.id}</h1>
       <h2>{post.title}</h2>
       <p>{post.body}</p>
 
       <hr />
 
-      {/* ส่วนสำหรับแสดงคอมเมนต์ */}
       <h3>Comments</h3>
       <ul>
-        {comments.map((comment: any) => (
+        {comments.map((comment) => (
           <li key={comment.id}>
             <h4>{comment.name}</h4>
             <p>{comment.body}</p>
